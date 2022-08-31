@@ -2,6 +2,7 @@ import { ICarsImagesRepository } from "@modules/cars/repositories/ICarsImagesRep
 import { inject, injectable } from "tsyringe";
 
 import {deleteFile} from "@utils/file";
+import { userInfo } from "os";
 
 interface IRequest {
     car_id: string,
@@ -20,9 +21,12 @@ class UploadCarImagesUseCase {
         //percorrendo o array de images
         images_name.map( async (image) => {
             
-            if(image){
-                await deleteFile(`./tmp/cars/${image}`)
+            const carImage = await this.carsImagesRepository.findById(car_id);
+
+            if(carImage.image_name){
+                 deleteFile(`./tmp/cars/${carImage.image_name}`);
             }
+
             //salvando as imagens um por um
             await this.carsImagesRepository.create(car_id, image);
         });
