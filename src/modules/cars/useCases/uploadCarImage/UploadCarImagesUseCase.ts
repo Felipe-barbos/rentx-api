@@ -20,13 +20,6 @@ class UploadCarImagesUseCase {
     async execute({car_id, images_name}: IRequest): Promise<void>{
         //percorrendo o array de images
         images_name.map( async (image) => {
-            
-            const carImage = await this.carsImagesRepository.findById(car_id);
-
-            if(carImage.image_name){
-                 deleteFile(`./tmp/cars/${carImage.image_name}`);
-            }
-
             //salvando as imagens um por um
             await this.carsImagesRepository.create(car_id, image);
         });

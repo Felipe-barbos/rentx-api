@@ -23,12 +23,6 @@ class CarsImagesRepository implements ICarsImagesRepository{
         return carImage;
     }
 
-    async findById(car_id: string): Promise<CarImage>{
-        const carImage = await this.repository.findOne(car_id);
-
-        return carImage;
-    }
-
 };
 
 export {CarsImagesRepository};
