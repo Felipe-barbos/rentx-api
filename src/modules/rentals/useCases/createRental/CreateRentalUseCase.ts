@@ -1,4 +1,5 @@
 
+import { ICarsRepository } from "@modules/cars/repositories/ICarsRepository";
 import { Rental } from "@modules/rentals/infra/typeorm/entities/Rental";
 import { IRentalsRepository } from "@modules/rentals/repositories/IRentalsRepository";
 import { IDateProvider } from "@shared/container/providers/DateProvider/IDateProvider";
@@ -22,50 +23,58 @@ class CreateRentalUseCase {
         @inject("RentalsRepository")
         private rentalsRepository: IRentalsRepository,
         @inject("DateProvider")
-        private dateProvider: IDateProvider
-    ){}
+        private dateProvider: IDateProvider,
+        @inject("CarsRepository")
+        private carsRepository: ICarsRepository
+    ) { }
 
-    async execute({ 
-         user_id,
-         car_id,
-         expected_return_date}:IRequest):Promise<Rental>{
+    async execute({
+        user_id,
+        car_id,
+        expected_return_date }: IRequest): Promise<Rental> {
 
-            const minimunHour = 24;
+        const minimunHour = 24;
 
-            // Não deve ser possível cadastrar um novo aluguel caso já exista um aberto para o mesmo carro
-            const carUnavailable = await this.rentalsRepository.findOpenRentalByCar(car_id);
+        // Não deve ser possível cadastrar um novo aluguel caso já exista um aberto para o mesmo carro
+        const carUnavailable = await this.rentalsRepository.findOpenRentalByCar(car_id);
 
-            if(carUnavailable){
-                throw new AppError("Car is unavailable");
-            }
+        if (carUnavailable) {
+            throw new AppError("Car is unavailable");
+        }
 
-            //Não deve ser possível cadastrar um novo aluguel caso já exista um aberto para o mesmo usuário
-            const rentalOpenToUser = await this.rentalsRepository.findOpenRentalByUser(user_id);
-            
-            if(rentalOpenToUser){
-                throw new AppError("Theres a rental in progress for user!");
-            }
+        //Não deve ser possível cadastrar um novo aluguel caso já exista um aberto para o mesmo usuário
+        const rentalOpenToUser = await this.rentalsRepository.findOpenRentalByUser(user_id);
 
-            // O aluguel deve ter duração mínima de 24 horas.
-            const dateNow = this.dateProvider.dateNow();
+        if (rentalOpenToUser) {
+            throw new AppError("Theres a rental in progress for user!");
+        }
 
-            const compare = this.dateProvider.compareInHours(dateNow, expected_return_date);
+        // O aluguel deve ter duração mínima de 24 horas.
+        const dateNow = this.dateProvider.dateNow();
 
-            if(compare < minimunHour){
-                throw new AppError("Invalid return time!");
-            }
-            
+        const compare = this.dateProvider.compareInHours(dateNow, expected_return_date);
 
-            const rental = await this.rentalsRepository.create({
-                user_id,
-                car_id,
-                expected_return_date,
-            });
+        if (compare < minimunHour) {
+            throw new AppError("Invalid return time!");
+        }
 
-            return rental;
+
+        const rental = await this.rentalsRepository.create({
+            user_id,
+            car_id,
+            expected_return_date,
+        });
+
+        await this.carsRepository.updateAvailable(
+            car_id,
+            false
+        );
+
+        return rental;
+
 
     }
 
 };
 
-export {CreateRentalUseCase};
+export { CreateRentalUseCase };
