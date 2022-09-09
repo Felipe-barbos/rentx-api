@@ -7,6 +7,7 @@ import { IRentalsRepository } from "../IRentalsRepository";
 class RentalsRepositoryInMemory implements IRentalsRepository {
 
 
+
     rentals: Rental[] = [];
 
     async findOpenRentalByCar(car_id: string): Promise<Rental> {
@@ -31,6 +32,11 @@ class RentalsRepositoryInMemory implements IRentalsRepository {
 
         return rental;
     };
+
+
+    async findById(id: string): Promise<Rental> {
+        return this.rentals.find((rental) => rental.id === id);
+    }
 
 };
 
