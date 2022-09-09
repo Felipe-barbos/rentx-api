@@ -12,6 +12,7 @@ class RentalsRepository implements IRentalsRepository {
     constructor() {
         this.repository = getRepository(Rental);
     }
+   
     
 
 
@@ -52,6 +53,17 @@ class RentalsRepository implements IRentalsRepository {
         const rental = await this.repository.findOne(id);
 
         return rental;
+    }
+
+   async findByUser(user_id: string): Promise<Rental[]> {
+        const rentals = await this.repository.find({
+           where: {user_id},
+           relations:[
+            "car"
+           ]
+        });
+
+        return rentals;
     }
 
 }
