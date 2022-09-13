@@ -51,7 +51,7 @@ class AuthenticateUserUseCase{
         const passowrdMatch = await compare(password, user.password);
 
         if(!passowrdMatch){
-            throw new AppError("Email or passowrd incorrect!");
+            throw new AppError("Email or password incorrect!");
         };
      
     // Gerar jsonwebtoken
