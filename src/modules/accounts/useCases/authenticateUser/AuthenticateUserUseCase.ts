@@ -1,7 +1,7 @@
 import { inject, injectable } from "tsyringe";
 import { IUsersRepository } from "@modules/accounts/repositories/IUsersRepository";
-import {sign} from "jsonwebtoken";
-import {compare} from "bcrypt";
+import { sign } from "jsonwebtoken";
+import { compare } from "bcryptjs";
 import { AppError } from "@shared/errors/AppError";
 import { IUsersTokenRepository } from "@modules/accounts/repositories/IUsersTokenRepository";
 import auth from "@config/auth";
@@ -10,14 +10,14 @@ import { IDateProvider } from "@shared/container/providers/DateProvider/IDatePro
 
 
 
-interface IRequest{
+interface IRequest {
     email: string;
     password: string;
 };
 
 
-interface IResponse{
-    user:{
+interface IResponse {
+    user: {
         name: string,
         email: string,
     },
@@ -27,7 +27,7 @@ interface IResponse{
 
 
 @injectable()
-class AuthenticateUserUseCase{
+class AuthenticateUserUseCase {
 
     constructor(
         @inject("UsersRepository")
@@ -36,54 +36,54 @@ class AuthenticateUserUseCase{
         private usersTokenRepository: IUsersTokenRepository,
         @inject("DateProvider")
         private dateProvider: IDateProvider
-    ){}
+    ) { }
 
-    async execute({email,password}): Promise<IResponse>{
+    async execute({ email, password }): Promise<IResponse> {
 
         //Usuário existe
         const user = await this.usersRepository.findByEmail(email);
-        const {expires_in_token, secret_refresh_token,secret_token, expires_in_refresh_token,expires_refresh_token_days} = auth;
+        const { expires_in_token, secret_refresh_token, secret_token, expires_in_refresh_token, expires_refresh_token_days } = auth;
 
-        if(!user){
+        if (!user) {
             throw new AppError("Email or password incorrect!");
         };
         // Senha está correta
         const passowrdMatch = await compare(password, user.password);
 
-        if(!passowrdMatch){
+        if (!passowrdMatch) {
             throw new AppError("Email or password incorrect!");
         };
-     
-    // Gerar jsonwebtoken
-        const token = sign({}, secret_token,{
-            subject:user.id,
+
+        // Gerar jsonwebtoken
+        const token = sign({}, secret_token, {
+            subject: user.id,
             expiresIn: expires_in_token
         });
 
-    // refresh-token
-    
-    const refresh_token = sign({email}, secret_refresh_token,{
-        subject: user.id,
-        expiresIn: expires_in_refresh_token
-    });
+        // refresh-token
 
-    const refresh_token_expires_date = this.dateProvider.addDays(
-        expires_refresh_token_days);
+        const refresh_token = sign({ email }, secret_refresh_token, {
+            subject: user.id,
+            expiresIn: expires_in_refresh_token
+        });
+
+        const refresh_token_expires_date = this.dateProvider.addDays(
+            expires_refresh_token_days);
 
 
-    
-     await this.usersTokenRepository.create({
+
+        await this.usersTokenRepository.create({
             user_id: user.id,
             refresh_token,
-            expires_date:refresh_token_expires_date,
-      });
+            expires_date: refresh_token_expires_date,
+        });
 
 
-        
+
 
         const tokenReturn: IResponse = {
             token,
-            user:{
+            user: {
                 name: user.name,
                 email: user.email
             },
@@ -91,9 +91,9 @@ class AuthenticateUserUseCase{
         }
 
         return tokenReturn;
-       
-        
+
+
     };
 };
 
-export {AuthenticateUserUseCase};
+export { AuthenticateUserUseCase };
